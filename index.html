@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>☣Horror Death Chat☠</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital@1&family=Courier+Prime&display=swap" rel="stylesheet">
+    <style>
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #050508; }
+        ::-webkit-scrollbar-thumb { background: #111116; border-radius: 10px; }
+        
+        .theme-darkness { --bg-main: #020204; --bg-panel: #07070c; --border-color: rgba(40,40,50,0.4); --text-accent: #4f46e5; }
+        .theme-ash { --bg-main: #0f1115; --bg-panel: #161a22; --border-color: rgba(100,116,139,0.2); --text-accent: #64748b; }
+        .theme-blood { --bg-main: #0a0202; --bg-panel: #140505; --border-color: rgba(153,27,27,0.3); --text-accent: #991b1b; }
+
+        body { 
+            background-color: var(--bg-main); 
+            transition: all 0.5s ease; 
+            font-family: 'Amiri', 'Courier Prime', serif;
+        }
+        .glass-panel { background: var(--bg-panel); border: 1px solid var(--border-color); }
+        
+        @keyframes marquee {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+        .animate-marquee { animation: marquee 25s linear infinite; }
+        .view-once-badge { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        
+        #chat-wrapper {
+            display: flex;
+            flex-direction: column-reverse;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
+            scroll-behavior: smooth;
+        }
+
+        /* تأثيرات الهالة الضوئية الفخمة للملاك من اختيار Horror Death */
+        .owner-glow-bubble {
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+            border-color: #ef4444 !important;
+            animation: ownerNeonBorder 3s infinite alternate;
+        }
+        @keyframes ownerNeonBorder {
+            0% { border-color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3); }
+            100% { border-color: #7c3aed; box-shadow: 0 0 25px rgba(124, 58, 237, 0.6); }
+        }
+
+        /* بوب اب جدار الحماية المهيب */
+        .firewall-modal {
+            background: rgba(5, 5, 8, 0.95);
+            border: 2px solid #3b82f6;
+            box-shadow: 0 0 35px rgba(59, 130, 246, 0.5);
+            animation: firewallGlow 1s infinite alternate;
+        }
+        @keyframes firewallGlow {
+            0% { box-shadow: 0 0 25px rgba(59, 130, 246, 0.4); }
+            100% { box-shadow: 0 0 40px rgba(59, 130, 246, 0.7); border-color: #1d4ed8; }
+        }
+    </style>
+</head>
+<body class="theme-darkness text-slate-400 h-screen flex flex-col justify-between font-sans overflow-hidden antialiased select-none" onclick="handleGlobalClick()">
+
+    <audio id="bg-sad-music" loop class="hidden" src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"></audio>
+
+    <div id="lock-screen" class="hidden fixed inset-0 bg-black z-50 flex flex-col items-center justify-center p-4">
+        <div class="max-w-md w-full text-center space-y-4">
+            <i class="fa-solid fa-lock-open text-red-900 text-5xl mb-2 animate-pulse"></i>
+            <h2 id="t-lock-title" class="text-xl font-bold text-stone-500">الدردشة مغلقة بكلمة سر الحماية</h2>
+            <input type="password" id="unlock-pass-input" placeholder="أدخل كلمة سر فك القفل..." class="w-full bg-stone-950 border border-stone-800 rounded-xl p-3 text-center text-red-600 focus:outline-none">
+            <button onclick="unlockApp()" id="t-lock-btn" class="w-full bg-stone-900 hover:bg-stone-800 text-stone-400 py-3 rounded-xl font-bold transition">فتح الدردشة</button>
+        </div>
+    </div>
+
+    <!-- نافذة منبثقة مهيبة لجدار الحماية وتنبيهات المستويات التعجيزية -->
+    <div id="firewall-warning-modal" class="hidden fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4">
+        <div class="firewall-modal p-6 rounded-2xl max-w-sm w-full text-center space-y-4 text-slate-200">
+            <i class="fa-solid fa-shield-halved text-blue-500 text-5xl animate-bounce"></i>
+            <h3 class="text-blue-400 text-lg font-black tracking-wider">🛡️ جدار الحماية والتقييد</h3>
+            <p id="firewall-modal-desc" class="text-xs text-stone-400 leading-relaxed">المستوى الحالي لا يسمح لك بتخطي القيود الصارمة.</p>
+            <button onclick="closeFirewallModal()" class="w-full bg-blue-950/60 border border-blue-800 hover:bg-blue-900 text-blue-300 text-xs py-2 rounded-xl transition font-bold">علم وينفذ</button>
+        </div>
+    </div>
+
+    <div id="login-screen" class="fixed inset-0 bg-[#020203] flex flex-col items-center justify-center z-40 px-4">
+        <div class="glass-panel p-8 rounded-xl w-full max-w-md text-center shadow-2xl relative border-stone-900 bg-stone-950/40">
+            <h1 class="text-2xl font-black mb-1 text-stone-600 tracking-wider">☣ Horror Death Chat☠</h1>
+            <a href="https://www.facebook.com/horrordeath2" target="_blank" class="text-[11px] text-stone-500 hover:text-red-900 transition underline block mb-6">created by Mohamed Hamdy</a>
+            
+            <div class="flex bg-stone-950 p-1 rounded-lg mb-4 border border-stone-900">
+                <button type="button" onclick="switchTab('visitor')" id="tab-visitor" class="w-1/2 py-1.5 text-xs font-bold rounded bg-stone-900 text-stone-300 transition-all">دخول كزائر حزين</button>
+                <button type="button" onclick="switchTab('register')" id="tab-register" class="w-1/2 py-1.5 text-xs font-bold rounded text-stone-600 transition-all">تسجيل هويتك</button>
+            </div>
+
+            <div id="login-error" class="hidden mb-3 p-2 bg-red-950/30 border border-red-900/40 text-red-500 rounded text-xs"></div>
+
+            <form id="auth-form" onsubmit="handleAuth(event)" class="space-y-3">
+                <input type="text" id="login-username" maxlength="15" placeholder="الاسم المستعار..." class="w-full bg-stone-950 border border-stone-900 rounded-lg px-4 py-2.5 text-stone-300 focus:outline-none focus:border-stone-800 text-center text-sm transition-all placeholder:text-stone-700" required>
+                
+                <div id="extended-fields" class="hidden space-y-3">
+                    <input type="email" id="login-email" placeholder="البريد الإلكتروني..." class="w-full bg-stone-950 border border-stone-900 rounded-lg px-4 py-2.5 text-stone-300 focus:outline-none text-center text-sm placeholder:text-stone-700">
+                    <input type="password" id="login-password" placeholder="كلمة المرور الشخصية..." class="w-full bg-stone-950 border border-stone-900 rounded-lg px-4 py-2.5 text-stone-300 focus:outline-none text-center text-sm placeholder:text-stone-700">
+                </div>
+
+                <button type="submit" id="t-login-btn" class="w-full bg-stone-900 hover:bg-stone-800 border border-stone-800 text-stone-400 font-bold py-3 rounded-lg transition text-sm tracking-widest">دخول الغرفة القديمة</button>
+            </form>
+        </div>
+        
+        <div class="mt-4 grid grid-cols-4 gap-1 bg-stone-950 p-2 rounded border border-stone-900 max-w-md w-full overflow-y-auto max-h-24">
+            <button onclick="changeLang('ar')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">العربية</button>
+            <button onclick="changeLang('en')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">English</button>
+            <button onclick="changeLang('fr')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Français</button>
+            <button onclick="changeLang('es')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Español</button>
+            <button onclick="changeLang('de')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Deutsch</button>
+            <button onclick="changeLang('ja')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">日本語</button>
+            <button onclick="changeLang('ru')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Русский</button>
+            <button onclick="changeLang('ko')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">한국어</button>
+            <button onclick="changeLang('it')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Italiano</button>
+            <button onclick="changeLang('zh')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">中文</button>
+            <button onclick="changeLang('pt')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Português</button>
+            <button onclick="changeLang('tr')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Türkçe</button>
+            <button onclick="changeLang('nl')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Nederlands</button>
+            <button onclick="changeLang('pl')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Polski</button>
+            <button onclick="changeLang('hi')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">हिन्दी</button>
+            <button onclick="changeLang('id')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Indonesia</button>
+            <button onclick="changeLang('vi')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Tiếng Việt</button>
+            <button onclick="changeLang('sv')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Svenska</button>
+            <button onclick="changeLang('no')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Norsk</button>
+            <button onclick="changeLang('fi')" class="text-[9px] px-1.5 py-1 rounded text-stone-500 hover:bg-stone-900 font-mono">Suomi</button>
+        </div>
+    </div>
+
+    <div class="flex flex-1 overflow-hidden h-full">
+        
+        <aside class="w-80 bg-stone-950 border-l border-stone-900/60 flex flex-col p-4 justify-between z-10 overflow-y-auto">
+            <div class="space-y-4 pr-1">
+                
+                <div class="bg-stone-900/20 p-3 rounded-xl border border-stone-900 text-center relative">
+                    <div class="absolute top-2 left-2 z-10 flex gap-1">
+                        <button onclick="toggleMusicControl(event)" id="music-toggle-btn" class="text-stone-600 hover:text-red-800 text-xs bg-stone-950 p-1 rounded border border-stone-900" title="تشغيل/إيقاف الموسيقى الحزينة">
+                            <i class="fa-solid fa-music"></i>
+                        </button>
+                    </div>
+
+                    <div class="relative w-16 h-16 mx-auto mb-2 group cursor-pointer" onclick="triggerAvatarChange()">
+                        <img id="profile-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=horror" class="w-16 h-16 rounded-full bg-stone-950 border border-stone-800 object-cover">
+                        <div class="absolute inset-0 bg-black/70 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="fa-solid fa-cloud-arrow-up text-xs text-stone-400"></i>
+                        </div>
+                    </div>
+                    <input type="file" id="avatar-file-input" class="hidden" accept="image/*" onchange="uploadAvatar(this)">
+                    
+                    <div class="flex justify-center items-center gap-1">
+                        <h3 id="profile-display-name" class="text-xs font-bold text-stone-400 truncate">...</h3>
+                        <button id="edit-username-btn" onclick="editProfileDialog()" class="hidden text-stone-600 hover:text-stone-400 text-[10px]"><i class="fa-solid fa-pen"></i></button>
+                    </div>
+                    <span id="profile-display-role" class="text-[9px] text-stone-600 block">زائر</span>
+                    
+                    <div class="mt-2 bg-stone-950/80 p-1.5 rounded border border-stone-900 text-[11px] text-left space-y-1">
+                        <div class="flex justify-between"><span class="text-stone-600">المستوى:</span> <span id="user-level" class="text-indigo-400 font-bold">1</span></div>
+                        <div class="flex justify-between"><span class="text-stone-600">العملات:</span> <span id="user-coins" class="text-yellow-600 font-bold">0</span></div>
+                    </div>
+
+                    <div class="mt-3 pt-2 border-t border-stone-900 space-y-1.5 text-right">
+                        <label id="t-theme-lbl" class="text-[9px] text-stone-600 block">تغيير المظهر الكئيب:</label>
+                        <select onchange="changeTheme(this.value)" id="theme-selector" class="w-full bg-stone-950 border border-stone-900 rounded p-1 text-[11px] text-stone-400 focus:outline-none">
+                            <option value="theme-darkness">ظلام دامس (الافتراضي)</option>
+                            <option value="theme-ash">رماد حزين (سوداوي)</option>
+                            <option value="theme-blood">دماء داكنة (رعب)</option>
+                        </select>
+
+                        <div id="chat-wallpaper-section" class="hidden mt-2">
+                            <label class="text-[9px] text-stone-600 block">تغيير خلفية الشات:</label>
+                            <input type="text" id="chat-bg-url" placeholder="رابط صورة الخلفية..." class="w-full bg-stone-950 border border-stone-900 rounded p-1 text-[10px] text-stone-400 mb-1">
+                            <button onclick="changeChatWallpaper()" class="w-full bg-indigo-950/40 text-indigo-400 border border-indigo-900 rounded text-[10px] py-1">تطبيق الخلفية</button>
+                        </div>
+
+                        <div id="owner-cms-section" class="hidden mt-2 border-t border-stone-900 pt-2 text-right">
+                            <label class="text-[9px] text-red-800 block">لوحة تحكم المالك والـ CMS المرنة:</label>
+                            <button onclick="ownerBroadcastNotice()" class="w-full text-center bg-red-950/40 text-red-400 border border-red-900 rounded text-[9px] py-1 mt-1">بث إخطار عام لجميع المتصلين</button>
+                            <button onclick="ownerToggleFeatureVisibility()" class="w-full text-center bg-stone-900 text-stone-400 border border-stone-800 rounded text-[9px] py-1 mt-1">سحب / إخفاء أزرار المرفقات</button>
+                            <button id="owner-custom-cms-btn" onclick="ownerAddNewCMSFeature()" class="w-full text-center bg-indigo-950/60 text-indigo-300 border border-indigo-800 rounded text-[9px] py-1 mt-1 font-bold">➕ إضافة زر ميزة/مهمة جديدة</button>
+                        </div>
+
+                        <div class="mt-2 border-t border-stone-900 pt-2">
+                            <label class="text-[9px] text-stone-600 block mb-1">إعدادات الصوت والخصوصية:</label>
+                            <div class="grid grid-cols-2 gap-1 mb-2">
+                                <button onclick="toggleSoundEffectSetting()" id="sound-effect-btn" class="bg-stone-900 border border-stone-800 rounded text-[9px] py-1 text-emerald-500">صوت النقرات: مفعل</button>
+                                <button onclick="toggleProfilePrivacySetting()" id="profile-privacy-btn" class="bg-stone-900 border border-stone-800 rounded text-[9px] py-1 text-emerald-500">الملف الشخصي: مفتوح</button>
+                            </div>
+                            <label id="t-lock-lbl" class="text-[9px] text-stone-600 block">قفل الشات بكلمة سر:</label>
+                            <div class="flex gap-1">
+                                <input type="password" id="app-lock-password" placeholder="كلمة سر التطبيق..." class="w-full bg-stone-950 border border-stone-900 rounded p-1 text-[10px] text-stone-400">
+                                <button onclick="saveAppLock()" class="bg-stone-900 text-stone-400 px-2 rounded text-[10px] hover:bg-stone-800">حفظ</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="level-perks-panel" class="bg-stone-900/30 p-3 rounded-xl border border-stone-900 space-y-2">
+                    <h4 class="text-[10px] font-bold text-yellow-600 uppercase tracking-wider"><i class="fa-solid fa-gem"></i> متجر وميزات مستويات الترقية المدفوعة:</h4>
+                    <div id="level-features-buttons-container" class="grid grid-cols-2 gap-1 max-h-40 overflow-y-auto pt-1">
+                    </div>
+                </div>
+
+                <div id="admin-panel" class="hidden bg-red-950/10 p-3 rounded-xl border border-red-900/30 space-y-2">
+                    <h4 class="text-[10px] font-bold text-red-700 uppercase tracking-wider"><i class="fa-solid fa-screwdriver-wrench"></i> صلاحيات لوحة التحكم:</h4>
+                    <div class="space-y-1">
+                        <button onclick="adminBlockUser()" class="w-full bg-stone-950 hover:bg-stone-900 border border-stone-900 rounded p-1.5 text-right text-xs text-stone-400 flex justify-between">
+                            <span>حظر مستخدم متصل</span> <i class="fa-solid fa-ban text-[10px] text-red-800 mt-0.5"></i>
+                        </button>
+                        <button onclick="adminChangeMemberName()" class="w-full bg-stone-950 hover:bg-stone-900 border border-stone-900 rounded p-1.5 text-right text-xs text-stone-400 flex justify-between">
+                            <span>تغيير اسم عضو</span> <i class="fa-solid fa-user-pen text-[10px] text-stone-600 mt-0.5"></i>
+                        </button>
+                        <button onclick="adminSendPasscodeMsg()" class="w-full bg-stone-950 hover:bg-stone-900 border border-stone-900 rounded p-1.5 text-right text-xs text-stone-400 flex justify-between">
+                            <span>بث رسالة برقم سري</span> <i class="fa-solid fa-key text-[10px] text-yellow-700 mt-0.5"></i>
+                        </button>
+                        <button id="owner-manage-admins-btn" onclick="ownerToggleAdminRole()" class="hidden w-full bg-stone-950 hover:bg-stone-900 border border-stone-900 rounded p-1.5 text-right text-xs text-stone-400 flex justify-between">
+                            <span>تعيين / إزالة مدير</span> <i class="fa-solid fa-user-shield text-[10px] text-indigo-700 mt-0.5"></i>
+                        </button>
+                        <button id="owner-send-coins-btn" onclick="ownerSendCoins()" class="hidden w-full bg-stone-950 hover:bg-stone-900 border border-stone-900 rounded p-1.5 text-right text-xs text-stone-400 flex justify-between">
+                            <span>إرسال أو تبرع بالعملات</span> <i class="fa-solid fa-coins text-[10px] text-yellow-600 mt-0.5"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="reports-secret-panel" class="hidden bg-stone-900/60 p-3 rounded-xl border border-amber-900/40 space-y-2">
+                    <h4 class="text-[10px] font-bold text-amber-600 uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation"></i> صندوق البلاغات السري (الإدارة):</h4>
+                    <div id="reports-container" class="space-y-1.5 max-h-24 overflow-y-auto pt-1 text-[11px] text-stone-400">
+                        <p class="text-stone-600 text-center text-[10px]">لا توجد بلاغات سرية نشطة حالياً.</p>
+                    </div>
+                </div>
+
+                <div id="posts-panel" class="hidden bg-stone-900/30 p-3 rounded-xl border border-stone-900 space-y-2">
+                    <h4 class="text-[10px] font-bold text-stone-400 uppercase tracking-wider"><i class="fa-solid fa-rss"></i> جدار المنشورات الفيس بوك:</h4>
+                    <textarea id="post-input" placeholder="اكتب منشوراً جديداً للإداريين والمالك..." class="w-full bg-stone-950 border border-stone-900 rounded p-1.5 text-xs text-stone-300 h-12 focus:outline-none resize-none"></textarea>
+                    <button onclick="publishAdminPost()" class="w-full bg-stone-900 hover:bg-stone-800 text-stone-400 text-[11px] py-1 rounded border border-stone-800">نشر للعامة المتصلين</button>
+                    <div id="posts-container" class="space-y-1.5 max-h-36 overflow-y-auto pt-1 border-t border-stone-900"></div>
+                </div>
+
+                <div class="bg-stone-900/20 p-3 rounded-xl border border-stone-900 space-y-2">
+                    <h4 id="t-room-title" class="text-[10px] font-bold text-stone-500 uppercase tracking-wider"><i class="fa-solid fa-door-closed"></i> إنشاء غرفة سرية:</h4>
+                    <p class="text-[9px] text-amber-700">تكلفة الإنشاء: 6000 عملة رقمية</p>
+                    <input type="text" id="new-room-name" placeholder="اسم الغرفة الموحشة..." class="w-full bg-stone-950 border border-stone-900 rounded p-2 text-xs text-stone-300">
+                    <input type="password" id="new-room-pass" placeholder="كلمة مرور الغرفة..." class="w-full bg-stone-950 border border-stone-900 rounded p-2 text-xs text-stone-300">
+                    <button onclick="createNewRoom()" id="t-room-btn" class="w-full bg-stone-900 hover:bg-stone-800 text-stone-400 text-xs py-1.5 rounded border border-stone-800">تأسيس الغرفة</button>
+                    
+                    <div class="pt-2">
+                        <span id="t-local-rooms" class="text-[10px] text-stone-600 block mb-1">الغرف النشطة محلياً:</span>
+                        <div id="local-rooms-list" class="space-y-1 max-h-24 overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <div class="space-y-3 bg-stone-900/10 p-2 rounded border border-stone-900">
+                    <div>
+                        <span id="t-your-id" class="text-[10px] text-stone-600 block mb-1">معرفك الفريد:</span>
+                        <div class="flex items-center gap-1 bg-stone-950 p-2 rounded border border-stone-900">
+                            <span id="my-peer-id" class="text-[11px] font-mono text-stone-500 truncate flex-1 select-all">جاري التحضير...</span>
+                            <button id="copy-btn" class="text-stone-600 hover:text-stone-400 p-0.5"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                    </div>
+                    <div>
+                        <span id="t-connect-peer" class="text-[10px] text-stone-600 block mb-1">استدعاء صديق عن بعد:</span>
+                        <input type="text" id="remote-peer-id" placeholder="ضع معرف صديقك..." class="w-full bg-stone-950 border border-stone-900 rounded p-2 text-xs text-stone-400 text-center mb-1">
+                        <button id="connect-btn" class="w-full bg-stone-900 text-stone-400 hover:bg-stone-800 text-xs py-2 rounded">ربط الاتصال الفوري</button>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="space-y-1 mt-2">
+                <button onclick="purchaseNameDecoration()" class="w-full bg-stone-950 hover:bg-stone-900 text-yellow-600 font-bold py-1.5 rounded border border-stone-900 text-[10px]">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> شراء زخرفة فاخرة للحساب (100k عملة)
+                </button>
+                <button onclick="logout()" class="w-full bg-stone-950 hover:bg-stone-900 text-stone-600 font-bold py-2 rounded border border-stone-900 text-xs">
+                    <i class="fa-solid fa-door-open"></i> <span id="t-exit-btn">تلاشي (خروج)</span>
+                </button>
+                <button onclick="triggerAccountSlaughter()" id="t-kill-btn" class="w-full bg-red-950/20 hover:bg-red-950/50 text-red-700 font-bold py-2 rounded border border-red-900/40 text-[10px] tracking-wider transition">
+                    <i class="fa-solid fa-skull"></i> قتل الحساب وفقدان البيانات للأبد
+                </button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col bg-stone-950/20 relative" id="chat-main-area" style="background-size: cover; background-position: center;">
+            <header class="p-4 bg-stone-950 border-b border-stone-900/60 flex justify-between items-center z-20">
+                <div>
+                    <h1 class="text-sm font-black text-stone-500 flex items-center gap-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-stone-700 animate-ping"></span>
+                        <span id="t-chat-title">☣Chat Horror Death☠</span>
+                    </h1>
+                    <p id="connection-status" class="text-[10px] text-stone-600 font-medium">وحيد الآن في الظلام...</p>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="relative cursor-pointer" onclick="togglePrivateList()">
+                        <i class="fa-solid fa-bell text-stone-600 hover:text-stone-400 text-sm"></i>
+                        <span id="notification-badge" class="hidden absolute -top-1.5 -right-1.5 bg-red-800 text-white text-[8px] px-1 rounded-full animate-bounce">0</span>
+                    </div>
+                    <a href="https://www.facebook.com/horrordeath2" target="_blank" class="text-xs text-stone-600 hover:text-stone-400 transition"><i class="fa-brands fa-facebook"></i> Mohamed Hamdy</a>
+                </div>
+            </header>
+
+            <div id="chat-box-outer" class="flex-1 overflow-hidden relative">
+                <div id="chat-wrapper" class="absolute inset-0 p-4 space-y-4 pb-44">
+                    <div id="chat-box" class="space-y-4 w-full flex flex-col"></div>
+                </div>
+            </div>
+
+            <div id="private-chats-list" class="hidden absolute top-14 left-4 w-64 bg-stone-950 border border-stone-900 rounded-lg p-2 z-50 shadow-2xl space-y-1">
+                <span class="text-[10px] text-stone-500 block border-b border-stone-900 pb-1 mb-1">صندوق المحادثات الخاصة والتحديثات</span>
+                <div id="private-list-container" class="max-h-48 overflow-y-auto space-y-1"></div>
+            </div>
+
+            <div class="absolute inset-x-0 bottom-4 p-4 z-30 pointer-events-none flex justify-center">
+                <div class="w-full max-w-xl bg-stone-950/95 p-2.5 rounded-xl border border-stone-900 shadow-[0_0_30px_rgba(0,0,0,0.9)] backdrop-blur-md pointer-events-auto flex items-center gap-2">
+                    
+                    <button id="view-once-btn" onclick="toggleViewOnce()" class="p-2 bg-stone-900 text-stone-600 hover:text-stone-400 rounded border border-stone-800 transition" title="رؤية لمرة واحدة">
+                        <i class="fa-solid fa-eye-slash text-xs"></i>
+                    </button>
+                    
+                    <div id="attachments-buttons-group" class="flex gap-1">
+                        <button onclick="triggerAttachment('image')" class="p-2 bg-stone-900 text-stone-600 hover:text-stone-400 rounded border border-stone-800 text-xs"><i class="fa-solid fa-image"></i></button>
+                        <button onclick="triggerAttachment('audio')" class="p-2 bg-stone-900 text-stone-600 hover:text-stone-400 rounded border border-stone-800 text-xs"><i class="fa-solid fa-microphone"></i></button>
+                        <button onclick="triggerAttachment('video')" class="p-2 bg-stone-900 text-stone-600 hover:text-stone-400 rounded border border-stone-800 text-xs"><i class="fa-solid fa-video"></i></button>
+                    </div>
+
+                    <input type="text" id="msg-input" placeholder="امسح وحشتك بروح هنا..." class="flex-1 bg-stone-900/40 border border-stone-900 rounded p-2 text-stone-300 focus:outline-none text-xs">
+
+                    <button id="send-btn" onclick="sendBroadcastMessage()" class="p-2 bg-stone-900 text-stone-400 hover:bg-stone-800 rounded px-4 text-xs font-bold border border-stone-800 flex items-center gap-1.5">
+                        <span id="t-send-text">بث</span>
+                        <i class="fa-solid fa-ghost text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="w-full bg-stone-950 border-t border-stone-900/60 py-2.5 overflow-hidden relative z-20">
+        <div id="marquee-container" class="flex whitespace-nowrap animate-marquee text-xs text-stone-600 space-x-12"></div>
+        <button id="owner-marquee-edit" onclick="ownerUpdateMarquee()" class="hidden absolute right-2 top-1/2 -translate-y-1/2 bg-stone-900 border border-stone-800 text-stone-500 rounded px-1.5 py-0.5 text-[9px]">تعديل الإعلان</button>
+    </footer>
+
+    <div id="private-chat-modal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+        <div class="glass-panel p-4 rounded-xl w-full max-w-md space-y-3 border-stone-900 bg-stone-950">
+            <div class="flex justify-between text-xs font-bold text-stone-400 border-b border-stone-900 pb-1.5">
+                <span id="private-chat-target-name">دردشة خاصة مع: ...</span>
+                <button onclick="closePrivateChatModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div id="private-msg-box" class="h-48 overflow-y-auto space-y-2 p-2 bg-stone-900/30 rounded border border-stone-900 text-xs flex flex-col"></div>
+            <div class="flex gap-1">
+                <input type="text" id="private-msg-input" placeholder="اكتب رسالة خاصة سرية..." class="flex-1 bg-stone-950 border border-stone-900 rounded p-2 text-xs text-stone-300 focus:outline-none">
+                <button onclick="sendPrivateMsg()" class="bg-stone-900 text-stone-400 border border-stone-800 px-3 rounded text-xs">إرسال</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة تحكم المالك الموسعة (حظر مؤقت وإنذار) -->
+    <div id="owner-moderation-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="glass-panel p-5 rounded-2xl w-full max-w-xs space-y-4 border-red-900/50 bg-stone-950 text-right">
+            <div class="flex justify-between text-xs font-bold text-red-500 border-b border-stone-900 pb-2">
+                <span>⚡ الصلاحيات السيادية للمالك</span>
+                <button onclick="closeOwnerModeration()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-xs text-stone-400">التحكم في العضو: <span id="mod-target-username" class="text-stone-200 font-bold"></span></p>
+            
+            <div class="space-y-2">
+                <label class="text-[10px] text-stone-500 block">⚠️ توجيه إنذار فوري ومخيف:</label>
+                <button onclick="executeOwnerWarning()" class="w-full bg-amber-950/40 text-amber-400 border border-amber-900 rounded p-2 text-xs font-bold hover:bg-amber-900/60 transition flex justify-between items-center">
+                    <span>صعق بإنذار رسمي</span> <i class="fa-solid fa-triangle-exclamation"></i>
+                </button>
+                
+                <hr class="border-stone-900 my-2">
+                
+                <label class="text-[10px] text-stone-500 block">⏳ حظر مؤقت ومحدد الفترة:</label>
+                <select id="ban-duration-select" class="w-full bg-stone-900 border border-stone-800 rounded p-2 text-xs text-stone-300 focus:outline-none">
+                    <option value="5">5 دقائق</option>
+                    <option value="60">ساعة واحدة</option>
+                    <option value="1440">يوم كامل (24 ساعة)</option>
+                    <option value="permanent">طرد نهائي أبدي</option>
+                </select>
+                <button onclick="executeOwnerBan()" class="w-full bg-red-950/40 text-red-400 border border-red-900 rounded p-2 text-xs font-bold hover:bg-red-900 transition flex justify-between items-center">
+                    <span>تطبيق حظر السيرفر الفوري</span> <i class="fa-solid fa-user-slash"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="user-popup-menu" class="hidden fixed bg-stone-950 border border-stone-900 rounded-xl p-3 z-50 shadow-2xl w-52 space-y-2">
+        <div class="flex items-center gap-2 border-b border-stone-900 pb-2">
+            <img id="popup-user-avatar" class="w-8 h-8 rounded-full border border-stone-800 object-cover" src="">
+            <div class="overflow-hidden">
+                <h5 id="popup-user-name" class="text-xs font-bold text-stone-300 truncate">...</h5>
+                <span id="popup-user-role" class="text-[9px] text-stone-500 block truncate">...</span>
+            </div>
+        </div>
+        <button onclick="actionFromPopup('pm')" class="w-full text-right py-1.5 px-2 hover:bg-stone-900 rounded text-xs text-stone-400 flex items-center gap-2"><i class="fa-solid fa-envelope text-stone-600"></i> ارسال رسالة خاصة</button>
+        <button onclick="actionFromPopup('profile')" class="w-full text-right py-1.5 px-2 hover:bg-stone-900 rounded text-xs text-stone-400 flex items-center gap-2"><i class="fa-solid fa-user text-stone-600"></i> رؤية الملف الشخصي</button>
+        <!-- الخيار الملكي المضاف للمالك تلقائياً عند الضغط على أي قائمة مستخدم -->
+        <button id="popup-owner-mod-btn" onclick="actionFromPopup('owner_mod')" class="hidden w-full text-right py-1.5 px-2 hover:bg-red-950/40 rounded text-xs text-red-400 flex items-center gap-2 border border-transparent hover:border-red-900/50"><i class="fa-solid fa-gavel"></i> لوحة التحكم والتعزير</button>
+    </div>
+
+    <div id="msg-options-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+        <div class="glass-panel p-4 rounded-xl w-full max-w-xs space-y-3 border-stone-900">
+            <div class="flex justify-between text-[11px] font-bold text-stone-500 border-b border-stone-900 pb-1.5">
+                <span id="t-msg-ops">تفاصيل الأثر</span>
+                <button onclick="closeOptions()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div id="emoji-reactions-group" class="flex justify-around bg-stone-950 p-2 rounded border border-stone-900 text-sm">
+                <button onclick="reactToMessage('💀')">💀</button>
+                <button onclick="reactToMessage('🖤')">🖤</button>
+                <button onclick="reactToMessage('⛓️')">⛓️</button>
+                <button onclick="reactToMessage('👁️')">👁️</button>
+            </div>
+            
+            <button onclick="reportToAdmins()" class="w-full text-right p-2 bg-amber-950/20 hover:bg-amber-950/40 text-xs rounded border border-amber-900/30 flex items-center gap-2 text-amber-500">
+                <i class="fa-solid fa-flag"></i> <span>إرسال بلاغ سري للإدارة</span>
+            </button>
+
+            <button id="admin-delete-msg-btn" onclick="adminDeleteSelectedMsg()" class="hidden w-full text-right p-2 bg-red-950/20 hover:bg-red-950/40 text-xs rounded border border-red-900/30 flex items-center gap-2 text-red-400">
+                <i class="fa-solid fa-trash-can"></i> <span>حذف هذه الرسالة (إداري)</span>
+            </button>
+            
+            <button onclick="copyMessageText()" class="w-full text-right p-2 bg-stone-950 hover:bg-stone-900 text-xs rounded border border-stone-900 flex items-center gap-2 text-stone-400">
+                <i class="fa-regular fa-copy"></i> <span id="t-copy-msg">نسخ الكلمات</span>
+            </button>
+        </div>
+    </div>
+
+    <div id="slaughter-modal" class="hidden fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
+        <div class="glass-panel p-6 rounded-xl max-w-sm w-full text-center space-y-4 border-red-950 bg-stone-950">
+            <i class="fa-solid fa-skull-crossbones text-red-700 text-4xl animate-pulse"></i>
+            <h3 id="t-slaughter-title" class="text-red-600 text-base font-bold">قتل الحساب وفقدان البيانات للأبد</h3>
+            <p id="t-slaughter-desc" class="text-xs text-stone-500 leading-relaxed">أنت على وشك اقتلاع وجودك من هذه الغرفة الموحشة. سيتم تدمير ومسح حسابك، وسجل دردشاتك، وغرفك المشفرة للأبد من هذا المتصفح تماماً.</p>
+            <div class="flex gap-2 pt-2">
+                <button onclick="executeAccountSlaughter()" id="t-slaughter-confirm" class="w-1/2 bg-red-900/30 border border-red-900 hover:bg-red-900 text-red-200 text-xs py-2.5 rounded-lg transition font-bold">موافق</button>
+                <button onclick="closeSlaughter()" id="t-slaughter-cancel" class="w-1/2 bg-stone-900 border border-stone-800 text-stone-400 text-xs py-2.5 rounded-lg hover:bg-stone-800 transition font-bold">تراجع</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let peer = null, conn = null, currentUser = null;
+        let authMode = 'visitor', currentLang = 'ar', viewOnceActive = false;
+        let selectedMsgId = null, localMessages = [], currentRoom = null;
+        let isMusicPlaying = false;
+        let soundEffectsEnabled = true;
+        let isProfileOpen = true;
+        
+        let activeConnections = {};
+        let activePrivateChatUser = null;
+        let selectedPopupUser = null;
+        
+        const badWordsFilter = ["كلب", "حمار", "غبي", "حيوان", "شتيمة"];
+
+        // قائمة الـ 100 ميزة ترقية مدفوعة المقسمة بالقطارة والتعجيزية
+        const premiumFeaturesList = [];
+        const featureNamesByLevel = {
+            10: "ميزة تعديل وتغيير الصورة الشخصية بشكل مستقل",
+            20: "ميزة تفعيل التمرير اللامتناهي الفائق السلاسة",
+            30: "ميزة إرسال الروابط التشعبية المفتوحة داخل غرف البث",
+            40: "ميزة تخصيص ألوان النيون لفقاعات المحادثات الشخصية",
+            50: "ميزة إرسال ورفع الملفات المضغوطة والمستندات",
+            60: "ميزة تسجيل وإرسال البصمات والمقاطع الصوتية اللحظية",
+            70: "ميزة تفعيل الردود والاقتباسات الذكية على رسائل المتصلين",
+            75: "صلاحية إنشاء وتأسيس الغرف السرية والمشفرة محلياً",
+            85: "ميزة إخفاء طيف التواجد والحالة داخل قائمة المتصلين",
+            100: "ميزة التمكين الكامل وكسر كافة حدود الخصوصية والألوان"
+        };
+
+        for (let i = 1; i <= 100; i++) {
+            let targetLevel = Math.min(100, Math.ceil(i * 1.2));
+            let calculatedCost = i * 1500;
+            let customName = featureNamesByLevel[targetLevel] || `تفعيل حزمة الترقية النادرة والميزات الفئة رقم ${i}`;
+            
+            premiumFeaturesList.push({
+                id: i,
+                name: customName,
+                level: targetLevel,
+                cost: calculatedCost
+            });
+        }
+
+        function isAdminException(name) {
+            return name === "☣Horror Death☠" || name === "Control-girl";
+        }
+
+        // دالة لعرض البوب اب السوداء المهيبة لجدار الحماية
+        function triggerFirewallModal(descText) {
+            document.getElementById('firewall-modal-desc').innerText = descText;
+            document.getElementById('firewall-warning-modal').classList.remove('hidden');
+        }
+
+        function closeFirewallModal() {
+            document.getElementById('firewall-warning-modal').classList.add('hidden');
+        }
+
+        function handleGlobalClick() {
+            playClickSound(); 
+            initMelancholyAudio();
+        }
+
+        function playClickSound() {
+            if (!soundEffectsEnabled) return;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(120, ctx.currentTime);
+                gain.gain.setValueAtTime(0.05, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.08);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.08);
+            } catch(e) {}
+        }
+
+        function initMelancholyAudio() {
+            const audio = document.getElementById('bg-sad-music');
+            if (audio && !isMusicPlaying) {
+                audio.volume = 0.3;
+                audio.play().then(() => {
+                    isMusicPlaying = true;
+                }).catch(() => {});
+            }
+        }
+
+        function toggleMusicControl(event) {
+            event.stopPropagation();
+            const audio = document.getElementById('bg-sad-music');
+            const btn = document.getElementById('music-toggle-btn');
+            if (audio) {
+                if (isMusicPlaying) {
+                    audio.pause();
+                    isMusicPlaying = false;
+                    btn.classList.add('text-stone-600');
+                    btn.classList.remove('text-red-700');
+                } else {
+                    audio.play().then(() => {
+                        isMusicPlaying = true;
+                        btn.classList.remove('text-stone-600');
+                        btn.classList.add('text-red-700');
+                    });
+                }
+            }
+        }
+
+        function toggleSoundEffectSetting() {
+            soundEffectsEnabled = !soundEffectsEnabled;
+            const btn = document.getElementById('sound-effect-btn');
+            if (soundEffectsEnabled) {
+                btn.innerText = "صوت النقرات: مفعل";
+                btn.className = "bg-stone-900 border border-stone-800 rounded text-[9px] py-1 text-emerald-500";
+            } else {
+                btn.innerText = "صوت النقرات: معطل";
+                btn.className = "bg-stone-900 border border-stone-800 rounded text-[9px] py-1 text-red-500";
+            }
+        }
+
+        function toggleProfilePrivacySetting() {
+            isProfileOpen = !isProfileOpen;
+            const btn = document.getElementById('profile-privacy-btn');
+            if (isProfileOpen) {
+                btn.innerText = "الملف الشخصي: مفتوح";
+                btn.className = "bg-stone-900 border border-stone-800 rounded text-[9px] py-1 text-emerald-500";
+            } else {
+                btn.innerText = "الملف الشخصي: مغلق";
+                btn.className = "bg-stone-900 border border-stone-800 rounded text-[9px] py-1 text-red-500";
+            }
+        }
+
+        function ownerAddNewCMSFeature() {
+            if (!currentUser || !isAdminException(currentUser.username)) return;
+            const fName = prompt("أدخل اسم الميزة/الزر الجديد الذي تريد إضافته للموقع:");
+            const fLevel = parseInt(prompt("حدد مستوى فتح هذه الميزة لعامة المستخدمين:"));
+            if (fName && !isNaN(fLevel)) {
+                const container = document.getElementById('level-features-buttons-container');
+                const nextId = premiumFeaturesList.length + 1;
+                premiumFeaturesList.push({ id: nextId, name: fName, level: fLevel, cost: 5000 });
+                renderPremiumFeatures();
+                alert(`تم بنجاح إضافة زر المهمة الجديدة [${fName}] وتثبيت مستوى فتحها عند مستوى ${fLevel} عبر لوحة الـ CMS.`);
+            }
+        }
+
+        function renderPremiumFeatures() {
+            const container = document.getElementById('level-features-buttons-container');
+            container.innerHTML = '';
+            premiumFeaturesList.forEach(f => {
+                const btn = document.createElement('button');
+                btn.className = "bg-stone-950 border border-stone-900 rounded p-1 text-[9px] text-right text-stone-400 hover:border-stone-700 transition flex flex-col justify-between";
+                btn.onclick = (e) => {
+                    e.stopPropagation();
+                    triggerPremiumFeaturePurchase(f);
+                };
+                btn.innerHTML = `
+                    <span class="truncate text-stone-300 font-bold">${f.name}</span>
+                    <span class="text-[8px] text-indigo-500">مستوى: ${f.level} | ${f.cost} عملة</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function triggerPremiumFeaturePurchase(feature) {
+            if (currentUser && isAdminException(currentUser.username)) {
+                alert(`أنت المالك! الميزة [${feature.name}] مفتوحة لك بالكامل وبالمجان دون قيود.`);
+                return;
+            }
+            if (currentUser && currentUser.role.includes("زائر")) {
+                triggerFirewallModal("جدار الحماية: عذراً، الزائر لا يملك صلاحية استخدام المتجر أو الترقية المدفوعة.");
+                return;
+            }
+            if (currentUser.level < feature.level) {
+                triggerFirewallModal(`قفل المستوى التعجيزي: تحتاج إلى الوصول لمستوى ${feature.level} لفتح هذه الميزة. مستواك الحالي هو ${currentUser.level}.`);
+                return;
+            }
+            let coins = parseInt(localStorage.getItem('horror_user_coins') || '0');
+            if (coins < feature.cost) {
+                alert(`رصيد غير كافٍ: تكلفة تفعيل هذه الميزة هي ${feature.cost} عملة برمجية.`);
+                return;
+            }
+            coins -= feature.cost;
+            localStorage.setItem('horror_user_coins', coins);
+            document.getElementById('user-coins').innerText = coins;
+            alert(`تم بنجاح شراء وتفعيل [${feature.name}] من حسابك الرقمي.`);
+        }
+
+        function ownerBroadcastNotice() {
+            const notice = prompt("أدخل الإخطار العام الذي تريد بثه فوراً لجميع الغرف والمتصلين:");
+            if (notice) {
+                alert("تم بث الإخطار بنجاح كإشعار عام صارم.");
+                appendSystemMessage("إخطار عام من المالك: " + notice);
+                broadcastToAllConnected({ type: 'system_broadcast', text: notice });
+            }
+        }
+
+        function ownerToggleFeatureVisibility() {
+            const group = document.getElementById('attachments-buttons-group');
+            if (group) {
+                group.classList.toggle('hidden');
+                alert("تم تعديل رؤية وسحب أزرار المرفقات بنجاح من لوحة الـ CMS.");
+            }
+        }
+
+        function reportToAdmins() {
+            alert("تم إرسال البلاغ السري بنجاح لصندوق بلاغات الإدارة والمالك.");
+            const container = document.getElementById('reports-container');
+            if (container) {
+                if (container.innerHTML.includes("لا توجد بلاغات")) container.innerHTML = '';
+                container.innerHTML += `<p class="border-b border-stone-900 pb-1 text-red-400/80">⚠️ بلاغ عن رسالة ID: ${selectedMsgId || 'مجهول'}</p>`;
+            }
+            closeOptions();
+        }
+
+        function purchaseNameDecoration() {
+            if (currentUser && currentUser.role.includes("زائر") && !isAdminException(currentUser.username)) {
+                triggerFirewallModal("جدار الحماية: الزائر لا يملك أي صلاحيات لتغيير اسمه أو شراء زخرفات مخصصة.");
+                return;
+            }
+            let coins = parseInt(localStorage.getItem('horror_user_coins') || '0');
+            if (coins < 100000) {
+                alert("لا تملك رصيد كافٍ من العملات الرقمية! تحتاج إلى 100,000 عملة.");
+                return;
+            }
+            coins -= 100000;
+            localStorage.setItem('horror_user_coins', coins);
+            document.getElementById('user-coins').innerText = coins;
+            alert("مبروك! تم شراء الزخرفة الفاخرة المذهبة لاسمك بنجاح.");
+        }
+
+        const dictionary = {
+            ar: {
+                yourId: "معرفك الفريد:", connect: "استدعاء صديق عن بعد:", chatTitle: "☣Chat Horror Death☠", send: "بث", exit: "تلاشي (خروج)",
+                ops: "تفاصيل الأثر", copy: "نسخ الكلمات", wait: "وحيد الآن في الظلام...", connOK: "تم العثور على طيف آخر بنجاح.. لست وحيداً الآن", placeholder: "امسح وحشتك بروح هنا...",
+                visitor: "دخول كزائر حزين", register: "تسجيل هويتك", loginBtn: "الغرفة القديمة", userPlace: "الاسم المستعار...", themeLbl: "تغيير المظهر الكئيب:", lockLbl: "قفل الشات بكلمة سر:",
+                roomTitle: "إنشاء غرفة سرية:", roomBtn: "تأسيس الغرفة", roomPlace: "اسم الغرفة الموحشة...", roomPass: "كلمة مرور الغرفة...", localRooms: "الغرف النشطة محلياً:",
+                lockTitle: "الدردشة مغلقة بكلمة سر الحماية", lockBtn: "فتح الدردشة", killBtn: "قتل الحساب والبيانات للأبد",
+                slaughterTitle: "قتل الحساب وفقدان البيانات للأبد", slaughterDesc: "أنت على وشك اقتلاع وجودك من هذه الغرفة الموحشة. سيتم تدمير ومسح حسابك، وسجل دردشاتك، وغرفك المشفرة للأبد من هذا المتصفح تماماً.",
+                slaughterConfirm: "موافق", slaughterCancel: "تراجع",
+                m1: "☣ مرحباً بك في عالم الرعب والوحدة الخالصة ☠", m2: "جرب لعبة 2048 المثيرة هنا", m3: "☠ الغرف مشفرة محلياً بالكامل ولا تترك أثر ☣", m4: "جرب ذكاء mo ai الخارق من هنا", m5: "☣ تم التطوير بواسطة محمد حمدي ☠"
+            },
+            en: {
+                yourId: "Your Unique ID:", connect: "Summon Remote Friend:", chatTitle: "☣Horror Death Chat☠", send: "Broadcast", exit: "Fade Out (Exit)",
+                ops: "Trace Details", copy: "Copy Words", wait: "Alone in the dark right now...", connOK: "Another ghost found successfully.. You are not alone", placeholder: "Wipe your loneliness here...",
+                visitor: "Enter as Sad Visitor", register: "Register Identity", loginBtn: "Enter Old Room", userPlace: "Pseudonym...", themeLbl: "Change Gloomy Theme:", lockLbl: "App Lock Password:",
+                roomTitle: "Create Secret Room:", roomBtn: "Establish Room", roomPlace: "Grim Room Name...", roomPass: "Room Password...", localRooms: "Active Rooms Locally:",
+                lockTitle: "Chat is locked by security password", lockBtn: "Unlock Chat", killBtn: "Slaughter Account & Data Forever",
+                slaughterTitle: "Account Slaughter & Eternal Data Loss", slaughterDesc: "You are about to uproot your existence. Your account, history, and encrypted rooms will be wiped forever from this browser.",
+                slaughterConfirm: "OK", slaughterCancel: "Cancel",
+                m1: "☣ Welcome to the world of pure horror and isolation ☠", m2: "Try the exciting 2048 game here", m3: "☠ Rooms are completely encrypted locally and leave no trace ☣", m4: "Try the superhuman intelligence of mo ai here", m5: "☣ Developed by Mohamed Hamdy ☠"
+            }
+        };
+
+        function changeLang(lang) {
+            if(!dictionary[lang]) return;
+            currentLang = lang;
+            const d = dictionary[lang];
+            
+            document.getElementById('t-chat-title').innerText = d.chatTitle;
+            document.getElementById('t-send-text').innerText = d.send;
+            document.getElementById('t-exit-btn').innerText = d.exit;
+            document.getElementById('t-msg-ops').innerText = d.ops;
+            document.getElementById('t-copy-msg').innerText = d.copy;
+            document.getElementById('msg-input').placeholder = d.placeholder;
+            
+            document.getElementById('tab-visitor').innerText = d.visitor;
+            document.getElementById('tab-register').innerText = d.register;
+            document.getElementById('t-login-btn').innerText = d.loginBtn;
+            document.getElementById('login-username').placeholder = d.userPlace;
+            document.getElementById('t-theme-lbl').innerText = d.themeLbl;
+            document.getElementById('t-lock-lbl').innerText = d.lockLbl;
+            document.getElementById('t-room-title').innerHTML = `<i class="fa-solid fa-door-closed"></i> ${d.roomTitle}`;
+            document.getElementById('t-room-btn').innerText = d.roomBtn;
+            document.getElementById('new-room-name').placeholder = d.roomPlace;
+            document.getElementById('new-room-pass').placeholder = d.roomPass;
+            document.getElementById('t-local-rooms').innerText = d.localRooms;
+            document.getElementById('t-lock-title').innerText = d.lockTitle;
+            document.getElementById('t-lock-btn').innerText = d.lockBtn;
+            document.getElementById('t-your-id').innerText = d.yourId;
+            document.getElementById('t-connect-peer').innerText = d.connect;
+            document.getElementById('t-kill-btn').innerHTML = `<i class="fa-solid fa-skull"></i> ${d.killBtn}`;
+            
+            document.getElementById('t-slaughter-title').innerText = d.slaughterTitle;
+            document.getElementById('t-slaughter-desc').innerText = d.slaughterDesc;
+            document.getElementById('t-slaughter-confirm').innerText = d.slaughterConfirm;
+            document.getElementById('t-slaughter-cancel').innerText = d.slaughterCancel;
+
+            if(!conn) document.getElementById('connection-status').innerText = d.wait;
+            else document.getElementById('connection-status').innerText = d.connOK;
+
+            renderMarqueeContent();
+        }
+
+        function renderMarqueeContent() {
+            const d = dictionary[currentLang] || dictionary.ar;
+            const container = document.getElementById('marquee-container');
+            if(container) {
+                container.innerHTML = `
+                    <span>${d.m1}</span>
+                    <a href="https://mohamedhamdyr.github.io/2048/" target="_blank" class="text-red-800 hover:underline font-bold">${d.m2}</a>
+                    <span>${d.m3}</span>
+                    <a href="https://mohamedhamdyr.github.io/mo-ai/" target="_blank" class="text-indigo-800 hover:underline font-bold">${d.m4}</a>
+                    <span>${d.m5}</span>
+                `;
+            }
+        }
+
+        function saveHistory() {
+            localStorage.setItem('horror_chat_history', JSON.stringify(localMessages));
+        }
+
+        function loadHistory() {
+            const saved = localStorage.getItem('horror_chat_history');
+            if(saved) localMessages = JSON.parse(saved);
+        }
+
+        function switchTab(mode) {
+            authMode = mode;
+            const vBtn = document.getElementById('tab-visitor');
+            const rBtn = document.getElementById('tab-register');
+            const extended = document.getElementById('extended-fields');
+            
+            if(mode === 'visitor') {
+                vBtn.className = "w-1/2 py-1.5 text-xs font-bold rounded bg-stone-900 text-stone-300 transition-all";
+                rBtn.className = "w-1/2 py-1.5 text-xs font-bold rounded text-stone-600 transition-all";
+                extended.classList.add('hidden');
+            } else {
+                rBtn.className = "w-1/2 py-1.5 text-xs font-bold rounded bg-stone-900 text-stone-300 transition-all";
+                vBtn.className = "w-1/2 py-1.5 text-xs font-bold rounded text-stone-600 transition-all";
+                extended.classList.remove('hidden');
+            }
+        }
+
+        function handleAuth(event) {
+            event.preventDefault();
+            const usernameInput = document.getElementById('login-username').value.trim();
+            const emailInput = document.getElementById('login-email').value.trim();
+            const errorDiv = document.getElementById('login-error');
+
+            if (!usernameInput) return;
+
+            // فحص جدار الحظر قبل السماح بالدخول
+            const blockExpiry = localStorage.getItem(`banned_${usernameInput}`);
+            if (blockExpiry) {
+                if (blockExpiry === 'permanent' || Date.now() < parseInt(blockExpiry)) {
+                    const remaining = blockExpiry === 'permanent' ? "أبدي ونهائي" : Math.ceil((parseInt(blockExpiry) - Date.now()) / 60000) + " دقيقة";
+                    errorDiv.innerText = `⛔ أنت محظور من دخول هذه الغرفة الموحشة! المدة المتبقية: ${remaining}`;
+                    errorDiv.classList.remove('hidden');
+                    return;
+                } else {
+                    localStorage.removeItem(`banned_${usernameInput}`);
+                }
+            }
+
+            const savedUser = localStorage.getItem('horror_registered_user');
+            if (savedUser) {
+                const parsed = JSON.parse(savedUser);
+                if (parsed.username === usernameInput && authMode === 'visitor') {
+                    errorDiv.innerText = "هذا الاسم مستخدم ومسجل كعضوية مستقلة. يرجى تسجيل الدخول بها.";
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+            }
+
+            let role = "زائر حزين 👤";
+            let level = 0; // الزائر الحزين مستواه 0 ومقيد بالكامل برمجياً
+            let coins = 0;
+
+            if (isAdminException(usernameInput)) {
+                role = "المالك والإدارة العليا 👑";
+                level = "☆"; // النجمة المضيئة المرموقة للملاك بدل الرقم
+                coins = 999999999999999999999; // رصيد المالك الأسطوري الخيالي الثابت
+                document.getElementById('admin-panel').classList.remove('hidden');
+                document.getElementById('posts-panel').classList.remove('hidden');
+                document.getElementById('chat-wallpaper-section').classList.remove('hidden');
+                document.getElementById('owner-manage-admins-btn').classList.remove('hidden');
+                document.getElementById('owner-send-coins-btn').classList.remove('hidden');
+                document.getElementById('owner-marquee-edit').classList.remove('hidden');
+                document.getElementById('owner-cms-section').classList.remove('hidden');
+                document.getElementById('reports-secret-panel').classList.remove('hidden');
+            } else if (authMode === 'register') {
+                role = "عضو مسجل ⛓️";
+                level = 5;
+                coins = 2000;
+                localStorage.setItem('horror_registered_user', JSON.stringify({ username: usernameInput, email: emailInput }));
+            }
+
+            currentUser = { username: usernameInput, role: role, level: level, coins: coins };
+            localStorage.setItem('horror_user_coins', coins);
+
+            document.getElementById('profile-display-name').innerText = currentUser.username;
+            document.getElementById('profile-display-role').innerText = currentUser.role;
+            document.getElementById('user-level').innerText = currentUser.level;
+            document.getElementById('user-coins').innerText = currentUser.coins;
+
+            if (isAdminException(usernameInput)) {
+                document.getElementById('profile-display-name').className = "text-xs font-black text-red-600 bg-black/40 px-2 py-0.5 rounded border border-red-900/60 shadow-[0_0_10px_rgba(220,38,38,0.5)] animate-pulse";
+            }
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('edit-username-btn').classList.remove('hidden');
+            
+            initPeer();
+            loadHistory();
+            renderSavedMessages();
+            renderPremiumFeatures();
+        }
+
+        function initPeer() {
+            peer = new Peer(null, { debug: 1 });
+            
+            peer.on('open', (id) => {
+                document.getElementById('my-peer-id').innerText = id;
+                const d = dictionary[currentLang] || dictionary.ar;
+                document.getElementById('connection-status').innerText = d.wait;
+            });
+            
+            peer.on('connection', (connection) => {
+                conn = connection;
+                setupConnectionCallbacks();
+            });
+
+            peer.on('error', (err) => {
+                console.error("PeerJS Error:", err);
+            });
+        }
+
+        document.getElementById('connect-btn').onclick = () => {
+            const remoteId = document.getElementById('remote-peer-id').value.trim();
+            if(!remoteId) return;
+            
+            document.getElementById('connection-status').innerText = "جاري استدعاء الطيف الآخر...";
+            conn = peer.connect(remoteId);
+            setupConnectionCallbacks();
+        };
+
+        function setupConnectionCallbacks() {
+            activeConnections[conn.peer] = conn;
+            
+            conn.on('open', () => {
+                const d = dictionary[currentLang] || dictionary.ar;
+                document.getElementById('connection-status').innerText = d.connOK;
+                conn.send({ type: 'identity_exchange', username: currentUser.username, role: currentUser.role, level: currentUser.level });
+            });
+            
+            conn.on('data', (data) => {
+                // استقبال بث إشعار الطرد العام من المالك
+                if(data.type === 'system_broadcast') {
+                    appendSystemMessage("إخطار عام من المالك: " + data.text);
+                }
+                // استقبال إخطار الحظر الموجه من المالك عبر دالة P2P اللحظية
+                else if (data.type === 'force_ban_signal' && data.target === currentUser.username) {
+                    localStorage.setItem(`banned_${currentUser.username}`, data.expiry);
+                    triggerFirewallModal(`⛔ تم حظرك فوراً وتطهير اتصالك بواسطة الإدارة لفترة محددة! سيتم إعادة تحميل الصفحة.`);
+                    setTimeout(() => { window.location.reload(); }, 4000);
+                }
+                // استقبال إشعار الإنذار المتفجر من المالك
+                else if (data.type === 'force_warning_signal' && data.target === currentUser.username) {
+                    // اهتزاز الشاشة العنيف للتنبيه الصادم
+                    document.body.classList.add('animate-pulse');
+                    triggerFirewallModal(`⚠️ تم إنذارك من قِبل الإدارة! التزم بالقوانين لحماية حسابك من الإبادة الجسيمة والترحيل.`);
+                    setTimeout(() => { document.body.classList.remove('animate-pulse'); }, 5000);
+                }
+                // استقبال ومحاكاة السيرفر في الوقت الفعلي عند تحديث معلومات الأعضاء المتصلين
+                else if (data.type === 'identity_update_realtime') {
+                    appendSystemMessage(`🔄 تحديث طيف متصل: العضو [${data.oldName}] قام بتحديث هويته الاسمية إلى [${data.newName}] والمستوى إلى [${data.level}].`);
+                }
+                else if(data.type === 'chat') {
+                    let cleanText = data.text;
+                    badWordsFilter.forEach(word => {
+                        const regex = new RegExp(word, "g");
+                        cleanText = cleanText.replace(regex, "☣[تم التطهير]☠");
+                    });
+
+                    localMessages.unshift({
+                        id: data.id,
+                        sender: data.sender,
+                        role: data.role,
+                        text: cleanText,
+                        viewOnce: data.viewOnce,
+                        timestamp: data.timestamp,
+                        level: data.level
+                    });
+                    saveHistory();
+                    renderSavedMessages();
+                    
+                    let currentCoins = parseInt(localStorage.getItem('horror_user_coins') || '0');
+                    currentCoins += 15;
+                    localStorage.setItem('horror_user_coins', currentCoins);
+                    document.getElementById('user-coins').innerText = currentCoins;
+
+                    // بث إشعار قراءة الرسائل التلقائي (Read Receipts) للطرف المرسل
+                    if (conn) {
+                        conn.send({ type: 'msg_read_receipt', id: data.id });
+                    }
+                } 
+                // معالجة مؤشر قراءة الرسائل عند تسلم الإشعار
+                else if (data.type === 'msg_read_receipt') {
+                    const readIndicator = document.getElementById(`read-status-${data.id}`);
+                    if (readIndicator) {
+                        readIndicator.innerHTML = `<i class="fa-solid fa-check-double text-blue-500 ml-1" title="تمت القراءة الفورية"></i>`;
+                    }
+                }
+                else if(data.type === 'reaction') {
+                    const m = localMessages.find(msg => msg.id === data.id);
+                    if(m) {
+                        m.reaction = data.reaction;
+                        saveHistory();
+                        renderSavedMessages();
+                    }
+                } else if(data.type === 'view_once_burn') {
+                    localMessages = localMessages.filter(msg => msg.id !== data.id);
+                    saveHistory();
+                    renderSavedMessages();
+                } else if(data.type === 'identity_exchange') {
+                    appendSystemMessage(`اتصل الطيف البرمجي: ${data.username} (${data.role}) (المستوى: ${data.level})`);
+                }
+            });
+
+            // رادار المغادرة الفوري وإشعار المتواجدين بانسحاب الأطياف
+            conn.on('close', () => {
+                document.getElementById('connection-status').innerText = "عُدت وحيداً.. تلاشى الطيف الآخر.";
+                appendSystemMessage(`❌ غادر أحد المستخدمين المتصلين شات الرعب الآن، قائمة الحضور تحدث تلقائياً.`);
+                delete activeConnections[conn.peer];
+            });
+        }
+
+        function broadcastToAllConnected(payload) {
+            for (let peerId in activeConnections) {
+                if (activeConnections[peerId]) {
+                    activeConnections[peerId].send(payload);
+                }
+            }
+            if(conn) conn.send(payload);
+        }
+
+        function sendBroadcastMessage() {
+            const input = document.getElementById('msg-input');
+            let text = input.value.trim();
+            if(!text) return;
+
+            // جدار الحماية: منع زوار مستوى 0 بالكامل من إرسال أي وسائط أو همسات ورسائل مخفية
+            if (currentUser.level === 0 && !isAdminException(currentUser.username)) {
+                if (viewOnceActive || text.includes("http") || text.length > 100) {
+                    triggerFirewallModal("جدار الحماية الصارم: حساب الزائر (المستوى 0) مقيد بالكامل! لا يمكنك إرسال همسات، روابط، وسائط، أو رسائل مطولة مبالغ فيها.");
+                    return;
+                }
+            }
+
+            badWordsFilter.forEach(word => {
+                const regex = new RegExp(word, "g");
+                text = text.replace(regex, "☣[تم التطهير]☠");
+            });
+
+            const msgId = 'msg-' + Date.now();
+            const timestamp = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+
+            const newMsg = {
+                id: msgId,
+                sender: currentUser.username,
+                role: currentUser.role,
+                text: text,
+                viewOnce: viewOnceActive,
+                timestamp: timestamp,
+                level: currentUser.level
+            };
+
+            localMessages.unshift(newMsg);
+            saveHistory();
+            renderSavedMessages();
+
+            broadcastToAllConnected({
+                type: 'chat',
+                id: msgId,
+                sender: currentUser.username,
+                role: currentUser.role,
+                text: text,
+                viewOnce: viewOnceActive,
+                timestamp: timestamp,
+                level: currentUser.level
+            });
+
+            input.value = '';
+            if(viewOnceActive) toggleViewOnce();
+        }
+
+        function toggleViewOnce() {
+            // جدار حماية الزوار من استخدام ميزة الرؤية لمرة واحدة
+            if (currentUser.level === 0 && !isAdminException(currentUser.username)) {
+                triggerFirewallModal("جدار الحماية: المستوى 0 (الزائر) لا يمكنه استخدام وضع الرؤية لمرة واحدة.");
+                return;
+            }
+            viewOnceActive = !viewOnceActive;
+            const btn = document.getElementById('view-once-btn');
+            if(viewOnceActive) {
+                btn.className = "p-2 bg-red-950 text-red-500 rounded border border-red-900 transition shadow-[0_0_10px_rgba(220,38,38,0.4)]";
+            } else {
+                btn.className = "p-2 bg-stone-900 text-stone-600 hover:text-stone-400 rounded border border-stone-800 transition";
+            }
+        }
+
+        function renderSavedMessages() {
+            const box = document.getElementById('chat-box');
+            box.innerHTML = '';
+
+            localMessages.forEach(m => {
+                const isMe = m.sender === currentUser.username;
+                const isAdminMsg = isAdminException(m.sender);
+                
+                let card = document.createElement('div');
+                
+                // حقن زخرفة المالك ونظام الهالة الضوئية النيون المشعة للملاك وتمرير التصميم السوداوي الفاخر
+                if (isAdminMsg) {
+                    card.className = "p-3 rounded-xl max-w-md space-y-1 transition border text-right relative bg-gradient-to-br from-red-950/50 via-purple-950/40 to-stone-950 self-center w-full owner-glow-bubble";
+                } else {
+                    card.className = `p-3 rounded-xl max-w-md space-y-1 transition border text-right relative ${
+                        isMe 
+                        ? 'bg-stone-900/40 border-stone-800 self-end' 
+                        : 'bg-stone-950/60 border-stone-900/60 self-start'
+                    }`;
+                }
+
+                let headerHtml = `<div class="flex justify-between items-center gap-4 border-b border-stone-900 pb-1 mb-1">`;
+                
+                const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${m.sender}`;
+                if (isAdminMsg) {
+                    headerHtml += `
+                        <span class="text-[10px] font-black text-red-500 tracking-widest uppercase flex items-center gap-1 cursor-pointer" onclick="openUserPopupMenu(event, '${m.sender}', '${m.role}', '${avatarUrl}')">
+                            <img src="${avatarUrl}" class="w-4 h-4 rounded-full border border-red-900 animate-spin">
+                            ☆ ${m.sender} 👑 
+                            <i class="fa-solid fa-ellipsis-vertical text-[9px] text-stone-500 mr-1"></i>
+                        </span>`;
+                } else {
+                    headerHtml += `
+                        <span class="text-[10px] font-bold text-stone-500 flex items-center gap-1 cursor-pointer" onclick="openUserPopupMenu(event, '${m.sender}', '${m.role}', '${avatarUrl}')">
+                            <img src="${avatarUrl}" class="w-4 h-4 rounded-full border border-stone-800">
+                            ${m.sender} <span class="text-[8px] text-stone-600">([مستوى: ${m.level || 0}] ${m.role})</span>
+                            <i class="fa-solid fa-ellipsis-vertical text-[9px] text-stone-700 mr-1"></i>
+                        </span>`;
+                }
+                
+                // تضمين مؤشر قراءة الرسائل (Read Receipts) أسفل ترويسة الرسالة مباشرة برمز الصحين
+                headerHtml += `
+                    <div class="flex items-center gap-1">
+                        <span id="read-status-${m.id}" class="text-stone-600 text-[10px]"><i class="fa-solid fa-check text-[9px]"></i></span>
+                        <span class="text-[8px] text-stone-700 font-mono">${m.timestamp}</span>
+                    </div>
+                </div>`;
+
+                let bodyHtml = '';
+                if(m.viewOnce) {
+                    bodyHtml = `
+                        <div id="burn-area-${m.id}" class="space-y-2">
+                            <p class="text-xs text-red-400/80 italic flex items-center gap-1.5"><i class="fa-solid fa-skull animate-pulse"></i> أثر غامض محمي (رؤية لمرة واحدة)</p>
+                            <button onclick="revealAndBurn('${m.id}')" class="bg-red-950/40 border border-red-900/50 hover:bg-red-900 text-red-200 text-[10px] px-2.5 py-1 rounded">اضغط لقراءة الأثر وفنائه فوراً</button>
+                        </div>
+                    `;
+                } else {
+                    bodyHtml = `<p class="text-xs ${isAdminMsg ? 'text-stone-200 font-bold tracking-wide' : 'text-stone-300'} font-medium leading-relaxed select-text">${m.text}</p>`;
+                }
+
+                if(m.reaction) {
+                    bodyHtml += `<div class="absolute -bottom-2 left-3 bg-stone-900 border border-stone-800 rounded-full px-1.5 py-0.5 text-[10px] shadow">${m.reaction}</div>`;
+                }
+
+                card.innerHTML = headerHtml + bodyHtml;
+                
+                card.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    openOptions(m.id);
+                };
+
+                box.appendChild(card);
+            });
+        }
+
+        function openUserPopupMenu(event, name, role, avatar) {
+            event.stopPropagation();
+            selectedPopupUser = { name: name, role: role, avatar: avatar };
+            const menu = document.getElementById('user-popup-menu');
+            menu.style.top = `${event.clientY}px`;
+            menu.style.left = `${event.clientX}px`;
+            
+            document.getElementById('popup-user-name').innerText = name;
+            document.getElementById('popup-user-role').innerText = role;
+            document.getElementById('popup-user-avatar').src = avatar;
+            
+            // إظهار لوحة تحكم المالك والتعزير فقط إذا كان المستخدم الحالي هو المالك الحقيقي للموقع
+            const modBtn = document.getElementById('popup-owner-mod-btn');
+            if (currentUser && isAdminException(currentUser.username)) {
+                modBtn.classList.remove('hidden');
+            } else {
+                modBtn.classList.add('hidden');
+            }
+            
+            menu.classList.remove('hidden');
+        }
+
+        function actionFromPopup(actionType) {
+            document.getElementById('user-popup-menu').classList.add('hidden');
+            if (!selectedPopupUser) return;
+            
+            if (actionType === 'pm') {
+                openPrivateChat(selectedPopupUser.name);
+            } else if (actionType === 'profile') {
+                alert(`📂 ملف الحساب الشخصي:\nالاسم: ${selectedPopupUser.name}\nالرتبة: ${selectedPopupUser.role}\nالحالة: متصل بخصوصية آمنة.`);
+            } else if (actionType === 'owner_mod') {
+                openOwnerModeration(selectedPopupUser.name);
+            }
+        }
+
+        // صلاحيات لوحة تحكم المالك (الحظر المؤقت والإنذار)
+        function openOwnerModeration(targetName) {
+            document.getElementById('mod-target-username').innerText = targetName;
+            document.getElementById('owner-moderation-modal').classList.remove('hidden');
+        }
+
+        function closeOwnerModeration() {
+            document.getElementById('owner-moderation-modal').classList.add('hidden');
+        }
+
+        function executeOwnerWarning() {
+            const target = document.getElementById('mod-target-username').innerText;
+            alert(`تم توجيه إنذار شاشة فوري وصادم للعضو [${target}] عبر قنوات الاتصال المباشر.`);
+            broadcastToAllConnected({ type: 'force_warning_signal', target: target });
+            closeOwnerModeration();
+        }
+
+        function executeOwnerBan() {
+            const target = document.getElementById('mod-target-username').innerText;
+            const duration = document.getElementById('ban-duration-select').value;
+            
+            let expiryTime = 'permanent';
+            if (duration !== 'permanent') {
+                expiryTime = Date.now() + (parseInt(duration) * 60 * 1000);
+            }
+            
+            alert(`تم حظر العضو [${target}] بنجاح وقطع اتصاله بالكامل ومنعه لإنفاذ العقوبة.`);
+            broadcastToAllConnected({ type: 'force_ban_signal', target: target, expiry: expiryTime });
+            closeOwnerModeration();
+        }
+
+        function openPrivateChat(targetName) {
+            // جدار حماية الزوار ومنعهم من إرسال الهمسات الخاصة
+            if (currentUser.level === 0 && !isAdminException(currentUser.username)) {
+                triggerFirewallModal("جدار الحماية: المستوى 0 (الزائر) لا يملك صلاحية فتح أو إرسال رسائل خاصة.");
+                return;
+            }
+            activePrivateChatUser = targetName;
+            document.getElementById('private-chat-target-name').innerText = `دردشة خاصة مع: ${targetName}`;
+            document.getElementById('private-chat-modal').classList.remove('hidden');
+        }
+
+        function closePrivateChatModal() {
+            document.getElementById('private-chat-modal').classList.add('hidden');
+        }
+
+        function sendPrivateMsg() {
+            const input = document.getElementById('private-msg-input');
+            const text = input.value.trim();
+            if (!text) return;
+            const box = document.getElementById('private-msg-box');
+            box.innerHTML += `<p class="p-1 bg-stone-900 rounded my-1 text-stone-300"><b>أنت:</b> ${text}</p>`;
+            input.value = '';
+        }
+
+        document.addEventListener('click', () => {
+            document.getElementById('user-popup-menu').classList.add('hidden');
+        });
+
+        function revealAndBurn(id) {
+            const m = localMessages.find(msg => msg.id === id);
+            if(!m) return;
+
+            const area = document.getElementById(`burn-area-${id}`);
+            area.innerHTML = `<p class="text-xs text-red-300 font-medium">${m.text}</p><p class="text-[9px] text-red-900 mt-1">تنبيه: تم التدمير الفوري محلياً.</p>`;
+            
+            if(conn) conn.send({ type: 'view_once_burn', id: id });
+            localMessages = localMessages.filter(msg => msg.id !== id);
+            saveHistory();
+        }
+
+        function openOptions(id) {
+            selectedMsgId = id;
+            const emojiGroup = document.getElementById('emoji-reactions-group');
+            
+            // قفل وحظر الزوار تماماً (مستوى 0) من عمل تفاعل مع الرسائل
+            if (currentUser && currentUser.level === 0 && !isAdminException(currentUser.username)) {
+                emojiGroup.style.display = 'none';
+            } else {
+                emojiGroup.style.display = 'flex';
+            }
+
+            if (currentUser && isAdminException(currentUser.username)) {
+                document.getElementById('admin-delete-msg-btn').classList.remove('hidden');
+            } else {
+                document.getElementById('admin-delete-msg-btn').classList.add('hidden');
+            }
+
+            document.getElementById('msg-options-modal').classList.remove('hidden');
+        }
+
+        function closeOptions() {
+            document.getElementById('msg-options-modal').classList.add('hidden');
+        }
+
+        function adminDeleteSelectedMsg() {
+            if (!isAdminException(currentUser.username)) return;
+            localMessages = localMessages.filter(msg => msg.id !== selectedMsgId);
+            saveHistory();
+            renderSavedMessages();
+            alert("تم حذف الأثر فورياً وبصورة صارمة من الشات.");
+            closeOptions();
+        }
+
+        function reactToMessage(emoji) {
+            if (currentUser && currentUser.level === 0 && !isAdminException(currentUser.username)) {
+                triggerFirewallModal("جدار الحماية: مستوى الزائر 0 لا يمكنه التعليق أو التفاعل مع الرسائل بأي شكل.");
+                return;
+            }
+            const m = localMessages.find(msg => msg.id === selectedMsgId);
+            if(m) {
+                m.reaction = emoji;
+                saveHistory();
+                renderSavedMessages();
+                broadcastToAllConnected({ type: 'reaction', id: selectedMsgId, reaction: emoji });
+            }
+            closeOptions();
+        }
+
+        function copyMessageText() {
+            const m = localMessages.find(msg => msg.id === selectedMsgId);
+            if(m) {
+                navigator.clipboard.writeText(m.text);
+                alert("نسخت الأثر بنجاح.");
+            }
+            closeOptions();
+        }
+
+        function createNewRoom() {
+            // التحقق من مستوى ترقية إنشاء الغرف (مستوى 75 كقيد تعجيزي للأعضاء)
+            if (!isAdminException(currentUser.username) && currentUser.level < 75) {
+                triggerFirewallModal("قفل الميزات: تحتاج لبلوغ المستوى 75 لتتمكن من تأسيس الغرف السرية المستقلة.");
+                return;
+            }
+
+            let coins = parseInt(localStorage.getItem('horror_user_coins') || '0');
+            if (coins < 6000 && !isAdminException(currentUser.username)) {
+                alert("لا تملك العملات الرقمية الكافية! تكلفة تأسيس الغرفة المشفرة هي 6000 عملة.");
+                return;
+            }
+            
+            const name = document.getElementById('new-room-name').value.trim();
+            const pass = document.getElementById('new-room-pass').value.trim();
+            if(!name) return;
+
+            if (!isAdminException(currentUser.username)) {
+                coins -= 6000;
+                localStorage.setItem('horror_user_coins', coins);
+                document.getElementById('user-coins').innerText = coins;
+            }
+
+            currentRoom = { name: name, pass: pass };
+            appendSystemMessage(`تم تشفير وتأسيس الغرفة بنجاح بتكلفة 6000 عملة: ${name}`);
+            
+            const list = document.getElementById('local-rooms-list');
+            list.innerHTML += `<button onclick="joinEncryptedRoom('${name}', '${pass}')" class="w-full text-right p-1 bg-stone-900 hover:bg-stone-800 rounded text-[11px] text-stone-400 block truncate">🔒 ${name}</button>`;
+        }
+
+        function joinEncryptedRoom(name, pass) {
+            if(pass) {
+                const check = prompt("أدخل الرقم السري لفك تشفير ودخول الغرفة:");
+                if(check !== pass) {
+                    alert("فشل فك التشفير الصارم! الرقم السري خاطئ.");
+                    return;
+                }
+            }
+            appendSystemMessage(`دخلت الغرفة المشفرة: ${name}`);
+        }
+
+        function adminBlockUser() {
+            if (!isAdminException(currentUser.username)) return;
+            const target = prompt("أدخل اسم المستخدم المتصل المراد حظره وقطع اتصاله بالكامل:");
+            if(target) {
+                alert(`تم حظر ${target} ومنعه من دخول الغرفة بنجاح.`);
+                broadcastToAllConnected({ type: 'force_ban_signal', target: target, expiry: 'permanent' });
+            }
+        }
+
+        function adminChangeMemberName() {
+            if (!isAdminException(currentUser.username)) return;
+            const target = prompt("أدخل الاسم المستعار الحالي للعضو:");
+            const newName = prompt("أدخل الاسم الجديد المفروض عليه:");
+            if(target && newName) alert(`تم فرض الاسم الجديد [${newName}] على المستخدم بنجاح.`);
+        }
+
+        function adminSendPasscodeMsg() {
+            if (!isAdminException(currentUser.username)) return;
+            const text = prompt("اكتب محتوى الرسالة الإدارية:");
+            const code = prompt("تعيين رقم سري لفتح قراءة الرسالة:");
+            if(text && code) {
+                appendSystemMessage(`رسالة مشفرة برقم سري من الإدارة. الرقم هو: ${code}`);
+            }
+        }
+
+        function ownerToggleAdminRole() {
+            if (currentUser.username !== "☣Horror Death☠") return;
+            const name = prompt("أدخل اسم العضو المراد ترقيته لمدير أو سحب الصلاحيات منه:");
+            if(name) alert(`تم تعديل رتبة ${name} وتحديث صلاحياته الإدارية بنجاح.`);
+        }
+
+        function ownerSendCoins() {
+            const name = prompt("أدخل اسم الحساب المراد التبرع له بالعملات الرقمية:");
+            const amount = parseInt(prompt("أدخل كمية العملات للتبرع:"));
+            if(name && amount) {
+                alert(`تم التبرع بنجاح بـ ${amount} عملة رقمية إلى حساب ${name}.`);
+            }
+        }
+
+        function ownerUpdateMarquee() {
+            if (!isAdminException(currentUser.username)) return;
+            const customText = prompt("أدخل نص الإعلان الجديد للشريط السفلي:");
+            if (customText) {
+                document.getElementById('marquee-container').innerHTML = `<span>☣ ${customText} ☠</span>`;
+                alert("تم تحديث شريط الإعلانات السفلي فورياً.");
+            }
+        }
+
+        function changeTheme(theme) {
+            document.body.className = `${theme} text-slate-400 h-screen flex flex-col justify-between font-sans overflow-hidden antialiased select-none`;
+        }
+
+        function changeChatWallpaper() {
+            const url = document.getElementById('chat-bg-url').value.trim();
+            if(url) {
+                document.getElementById('chat-main-area').style.backgroundImage = `url('${url}')`;
+                alert("تم تطبيق خلفية حائط الدردشة الجديدة.");
+            }
+        }
+
+        function saveAppLock() {
+            const pass = document.getElementById('app-lock-password').value.trim();
+            if(pass) {
+                localStorage.setItem('horror_app_lock', pass);
+                alert("تم تفعيل جدار حماية التطبيق بالرقم السري بنجاح.");
+            } else {
+                localStorage.removeItem('horror_app_lock');
+                alert("تم إلغاء قفل الحماية.");
+            }
+        }
+
+        function checkAppLockOnLoad() {
+            const locked = localStorage.getItem('horror_app_lock');
+            if(locked) {
+                document.getElementById('lock-screen').classList.remove('hidden');
+            }
+        }
+
+        function unlockApp() {
+            const input = document.getElementById('unlock-pass-input').value;
+            const saved = localStorage.getItem('horror_app_lock');
+            if(input === saved) {
+                document.getElementById('lock-screen').classList.add('hidden');
+            } else {
+                alert("الرمز غير صحيح! حاول مجدداً.");
+            }
+        }
+
+        function triggerAccountSlaughter() {
+            document.getElementById('slaughter-modal').classList.remove('hidden');
+        }
+
+        function closeSlaughter() {
+            document.getElementById('slaughter-modal').classList.add('hidden');
+        }
+
+        function executeAccountSlaughter() {
+            localStorage.clear();
+            alert("تم تدمير ومسح هويتك وسجلاتك بالكامل بنجاح.. فناء الوجود البرمجي.");
+            window.location.reload();
+        }
+
+        function appendSystemMessage(txt) {
+            const box = document.getElementById('chat-box');
+            let item = document.createElement('div');
+            item.className = "text-[10px] text-stone-600 bg-stone-900/10 border border-stone-900/40 p-1.5 rounded-lg text-center self-center w-3/4 my-1 italic";
+            item.innerText = txt;
+            box.appendChild(item);
+        }
+
+        function editProfileDialog() {
+            if (currentUser && currentUser.level === 0 && !isAdminException(currentUser.username)) {
+                triggerFirewallModal("جدار الحماية: لا يمكن لزوار المستوى 0 تعديل الأسماء المستعارة أو تغيير إعدادات الهوية.");
+                return;
+            }
+            const oldName = currentUser.username;
+            const newName = prompt("أدخل اسمك المستعار الجديد الحزين:", currentUser.username);
+            if(newName && newName.trim()) {
+                currentUser.username = newName.trim();
+                document.getElementById('profile-display-name').innerText = currentUser.username;
+                alert("تم تغيير هويتك الاسمية بنجاح.");
+                
+                // بث التحديث في الوقت الفعلي لمحاكاة وجود سيرفر مركزي (P2P Emulation)
+                broadcastToAllConnected({
+                    type: 'identity_update_realtime',
+                    oldName: oldName,
+                    newName: currentUser.username,
+                    level: currentUser.level
+                });
+            }
+        }
+
+        function triggerAvatarChange() {
+            // جدار حماية لمنع الزوار والمستويات الأقل من 10 من تغيير الصورة الشخصية
+            if (!isAdminException(currentUser.username) && (currentUser.level < 10)) {
+                triggerFirewallModal("جدار الحماية: ميزة تعديل الصورة الشخصية تتطلب بلوغ المستوى 10 على الأقل.");
+                return;
+            }
+            document.getElementById('avatar-file-input').click();
+        }
+
+        function uploadAvatar(input) {
+            if(input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('profile-avatar').src = e.target.result;
+                    alert("تم سحب ورفع مظهر صورتك الرمزية بنجاح وبثها للمتصلين محلياً.");
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function triggerAttachment(type) {
+            // جدار الحماية لتوزيع ميزات المرفقات على مستويات محددة (صور: 10، ملفات: 50، بصمة صوتية: 60)
+            if (!isAdminException(currentUser.username)) {
+                if (type === 'image' && currentUser.level < 10) {
+                    triggerFirewallModal("جدار الحماية: إرسال المرفقات الصورية مقيد حتى المستوى 10.");
+                    return;
+                }
+                if (type === 'audio' && currentUser.level < 60) {
+                    triggerFirewallModal("جدار الحماية: تسجيل وبث البصمات الصوتية مقيد حتى المستوى 60.");
+                    return;
+                }
+                if (type === 'video' && currentUser.level < 50) {
+                    triggerFirewallModal("جدار الحماية: رفع المرفقات والملفات المرئية مقيد حتى المستوى 50.");
+                    return;
+                }
+            }
+            alert(`نظام المرفقات: جاري تحضير ملف الـ ${type} للرفع الرقمي المتشعب...`);
+        }
+
+        function togglePrivateList() {
+            const panel = document.getElementById('private-chats-list');
+            panel.classList.toggle('hidden');
+        }
+
+        function logout() {
+            if(confirm("هل أنت متأكد من رغبتك في التلاشي والخروج الفوري؟")) {
+                window.location.reload();
+            }
+        }
+
+        window.onload = () => {
+            checkAppLockOnLoad();
+            changeLang('ar');
+        };
+        
+        document.getElementById('copy-btn').onclick = () => {
+            navigator.clipboard.writeText(document.getElementById('my-peer-id').innerText);
+            alert("تم نسخ معرفك الغامض.");
+        };
+    </script>
+</body>
+</html>
